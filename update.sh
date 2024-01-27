@@ -122,7 +122,7 @@ while IFS=';' read -r path repository mode remote_ref || [ -n "$path" ]; do
         exit 1
     fi
 
-    echo "trying to update with version $PULL_REMOTE_REF"
-    git subtree -P $path pull $repository $PULL_REMOTE_REF
+    echo "trying to update subtree $path with remote ref $PULL_REMOTE_REF"
+    git subtree -P $path pull $repository $PULL_REMOTE_REF --squash
 
 done < "$INPUT_FILE"
