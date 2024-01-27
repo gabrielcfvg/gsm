@@ -91,23 +91,26 @@ while IFS=';' read -r path repository mode remote_ref || [ -n "$path" ]; do
 
     echo "checking the $path subtree"
 
-    PULL_REMOTE_REF="0.0.0"
+    PULL_REMOTE_REF=0
     
     if [[ "$mode" == "semver" ]]; then
 
+        PULL_REMOTE_REF="__placeholder__"
+        PULL_REMOTE_REF_VERSION="__placeholder__"
         VERSION=$( parse_version $remote_ref )
 
         refs=($(git ls-remote "$repository" | awk '{print $2}'))
         for ref in ${refs[@]}; do
-            echo $ref
-            ref=$(parse_remote_ref $ref)
-            echo $ref
-            if [[ $ref ]] && check_version_compat $ref $VERSION && version_gt $ref $PULL_REMOTE_REF; then
-                PULL_REMOTE_REF=$ref
+            ref_version=$(parse_remote_ref $ref)
+            if [[ $ref_version ]] && check_version_compat $ref_version $VERSION; then
+                if version_gt $ref_version $PULL_REMOTE_REF_VERSION || [[ "$PULL_REMOTE_REF_VERSION" == "__placeholder__" ]]; then
+                    PULL_REMOTE_REF=$ref
+                    PULL_REMOTE_REF_VERSION=$ref_version
+                fi
             fi
         done
 
-        if [[ "$PULL_REMOTE_REF" == "0.0.0" ]]; then
+        if [[ "$PULL_REMOTE_REF" == "__placeholder__" ]]; then
             echo "could not find an compatible version"
             continue
         fi
