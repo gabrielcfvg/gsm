@@ -83,6 +83,11 @@ fi
 # loop through the lines of the CSV file
 while IFS=';' read -r path repository mode remote_ref || [ -n "$path" ]; do
     
+    path=$(echo "$path" | xargs)
+    repository=$(echo "$repository" | xargs)
+    mode=$(echo "$mode" | xargs)
+    remote_ref=$(echo "$remote_ref" | xargs)
+
     # check if the directory in the first column exists
     if ! [[ -d "$path" ]]; then
         echo "$path was not found"
