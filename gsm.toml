@@ -1,0 +1,10 @@
+
+[[dependency]]
+path = "deps/foo"
+remote = "foobar"
+semver_version = "6.6.6"
+
+[[dependency]]
+path = "deps/foo2"
+remote = "foobar2"
+semver_version = "9.9.9"

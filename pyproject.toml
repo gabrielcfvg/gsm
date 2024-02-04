@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "gsm"
+version = "0.1.5"
+description = ""
+authors = ["gabrielcfvg <gabrielcfvg@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
