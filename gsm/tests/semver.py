@@ -1,7 +1,12 @@
 
-import pytest
+# ---------------------------------- builtin --------------------------------- #
 import random
 from typing import Callable
+
+# -------------------------------- third party ------------------------------- #
+import pytest
+
+# ----------------------------------- local ---------------------------------- #
 from gsm.semver import *
 
 

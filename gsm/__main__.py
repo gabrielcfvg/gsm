@@ -1,14 +1,13 @@
 
+# ----------------------------------- local ---------------------------------- #
 from log import *
-from pathlib import Path
-from project_files import load_project_config, load_project_lock_file
-
-
+from project_files.config_file import load_config_file
 
 
 
 if __name__ == "__main__":
+    
+    config_file = load_config_file()
+    print(config_file)
 
-    config = load_project_config(Path("gsm.toml"))
-    # locks = load_project_lock_file(Path("gsm.lock"))
-    print(config)
+    pass

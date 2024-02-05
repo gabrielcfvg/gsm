@@ -1,10 +1,13 @@
 assert __name__ != "__main__"
 
-import logging
-from colorama import Fore, Style
+# ---------------------------------- builtin --------------------------------- #
 from typing import NoReturn, Dict
 from enum import Enum
+import logging
 import sys 
+
+# -------------------------------- third party ------------------------------- #
+from colorama import Fore, Style
 
 
 

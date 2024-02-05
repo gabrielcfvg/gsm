@@ -1,9 +1,13 @@
+
+# ---------------------------------- builtin --------------------------------- #
 from __future__ import annotations
-
-assert __name__ != "__main__"
-
 import re
 from typing import Optional
+
+
+
+# TODO: support full SemVer: https://semver.org/#semantic-versioning-specification-semver
+
 
 VERSION_REGEX = re.compile(r"^(0|[1-9]\d*)(\.(0|[1-9]\d*)(\.(0|[1-9]\d*))?)?")
 
