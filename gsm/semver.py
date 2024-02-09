@@ -3,31 +3,32 @@
 from __future__ import annotations
 import re
 from typing import Optional, cast
+import enum
 
 
 
 # TODO: support full SemVer: 
 # https://semver.org/#semantic-versioning-specification-semver
 # 
-# alteraçoes a fazer:
+# tasks:
+# 
+# - suportar parsing de versões com pré-release
+#   - ex: 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7, 1.0.0-x.7.z.92
+# 
+# - suportar parsing de versões com metadados de build
+#   - ex: 1.0.0+20130313144700, 1.0.0-beta+exp.sha.5114f85
+#   - obs: versões de pré-release e metadados de build podem compartilhar a mesma
+#          sintaxe de identificadores
 # 
 # - suportar versões de pré-release
-#   ex: 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7, 1.0.0-x.7.z.92
-# 
-# - suportar metadados de build
-#   ex: 1.0.0+20130313144700, 1.0.0-beta+exp.sha.5114f85
-# 
-# - versões de pré-release e metadados de build podem compartilhar a mesma
-#   sintaxe de identificadores
-# 
-# - metadados de build não devem ser consideradas na comparação
+# - suportar versões com metadados de build
 # 
 # - TODO: mostar warning para o usuário caso versões com metadados de build
 #   sejam usados no modo SemVer
 
 
-# _VERSION_IDENTIFIER = r""
-VERSION_REGEX = re.compile(r"^(0|[1-9]\d*)(\.(0|[1-9]\d*)(\.(0|[1-9]\d*))?)?")
+# TODO: write a more readable regex
+VERSION_REGEX = re.compile(r"^(?P<major>0|[1-9]\d*)(?:\.(?P<minor>0|[1-9]\d*)(?:\.(?P<patch>0|[1-9]\d*))?)?(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")
 
 class _IdentifierSequence:
     items: list[int | str]
@@ -110,14 +111,11 @@ class _IdentifierSequence:
                 
                 
 class Semver:
-
     _core: _IdentifierSequence
-    _pre_release: _IdentifierSequence
-    # TODO: build metadata
 
     # ---------------------------------- public ---------------------------------- #
 
-    def __init__(self, core: list[int], pre_release: list[int | str] = []):
+    def __init__(self, core: list[int]):
 
         if len(core) == 0:
             raise RuntimeError("version core must have at least the major number")
@@ -125,7 +123,6 @@ class Semver:
         # we don't need to check if the core version is valid, because the
         # constructor of _IdentifierSequence already does that
         self._core = _IdentifierSequence(*core)
-        self._pre_release = _IdentifierSequence(*pre_release)
 
     def is_compatible_with(self, other: Semver) -> bool:
         
@@ -138,21 +135,18 @@ class Semver:
         if self_major == 0:
             return self == other
         
-        # TODO: considerar pre-release
-
         return other >= self
 
     def to_string(self) -> str:
 
         core_str = ".".join(map(str, self._core.items))
-
-        pre_release_str = "-" if len(self._pre_release.items) > 0 else ""
-        pre_release_str += ".".join(map(str, self._pre_release.items))
-
-        return f"{core_str}{pre_release_str}"
+        return f"{core_str}"
     
     def __str__(self) -> str:
         return self.to_string()
+    
+    def __repr__(self) -> str:
+        return f"Semver({self.to_string()})"
 
 
     def __eq__(self, other: object) -> bool:
@@ -162,73 +156,101 @@ class Semver:
         
         not_eq = False
         not_eq |= self._core != other._core
-        # TODO: comparar pre-release
 
         return not not_eq
     
     def __gt__(self, other: object) -> bool:
-        
-        # TODO: considerar pre-release
         assert isinstance(other, Semver), f"comparison is not supported with type {type(other)}"
         return self._core > other._core
 
     def __ne__(self, other: object):
-        # TODO: considerar pre-release
         return not (self == other)
         
     def __ge__(self, other: object):
-        # TODO: considerar pre-release
         return (self == other) or (self > other)
     
     def __lt__(self, other: object):
-        # TODO: considerar pre-release
         return (not (self == other)) and (not (self > other))
     
     def __le__(self, other: object):
-        # TODO: considerar pre-release
         return (self == other) or (self < other)
+    
+
+    def __hash__(self):
+
+        major = self._core.items[0] if len(self._core.items) > 0 else 0
+        minor = self._core.items[1] if len(self._core.items) > 1 else 0
+        patch = self._core.items[2] if len(self._core.items) > 2 else 0
+
+        return hash((major, minor, patch))
     
     # ---------------------------------- private --------------------------------- #
 
-    def _validate(self):
+    def _core_lenght(self) -> int:
+        return len(self._core.items)
 
+    def _validate(self):
         assert len(self._core.items) > 0
         for item in self._core.items:
             assert type(item) == int
 
     def _major(self) -> int:
-        assert self._validate()
+        self._validate()
         return cast(int, self._core.items[0])
     
     def _minor(self) -> int:
-        assert self._validate()
+        self._validate()
         assert len(self._core.items) > 1
         return cast(int, self._core.items[1])
     
     def _patch(self) -> int:
-        assert self._validate()
+        self._validate()
         assert len(self._core.items) > 2
-        return cast(int, self._core.items[2])
+        return cast(int, self._core.items[2])    
+
+
+# ---------------------------------------------------------------------------- #
+#                                version parsing                               #
+# ---------------------------------------------------------------------------- #
+
+class VersionParseErrorType(enum.Enum):
+    PRE_RELEASE_NOT_SUPORTED = enum.auto()
+    BUILD_METADATA_NOT_SUPORTED = enum.auto()
+
+class VersionParseError(Exception):
+    error_type: VersionParseErrorType
+
+    def __init__(self, error_type: VersionParseErrorType):
+        super().__init__(self.get_message(error_type))
+        self.error_type = error_type
+
+    @staticmethod
+    def get_message(error_type: VersionParseErrorType) -> str:
+        
+        match error_type:
+            case VersionParseErrorType.PRE_RELEASE_NOT_SUPORTED:
+                return "pre-release is not supported yet"
+            case VersionParseErrorType.BUILD_METADATA_NOT_SUPORTED:
+                return "build metadata is not supported yet"
     
-    # def _pre_rel_nth(self, idx: int) -> int | str:
-    #     assert idx >= 0
-    #     assert self._validate()
-    #     assert idx < len(self._pre_release.items)
-    #     return self._pre_release.items[idx]
-
-
-    
-
 
 def _semver_from_match_group(match: re.Match[str]) -> Semver:
 
-    core_list: list[int] = [int(match.group(1))]
+    core_list: list[int] = [int(match.group("major"))]
 
-    if (_minor := match.group(3)) != None:
+    if (_minor := match.group("minor")) != None:
         core_list.append(int(_minor))
 
-    if (_patch := match.group(5)) != None:
+    if (_patch := match.group("patch")) != None:
         core_list.append(int(_patch))
+
+    # pre-release is not supported yet
+    if match.group("prerelease") != None:
+        raise VersionParseError(VersionParseErrorType.PRE_RELEASE_NOT_SUPORTED)
+    
+    # build metadata is not supported yet
+    if match.group("buildmetadata") != None:
+        raise VersionParseError(VersionParseErrorType.BUILD_METADATA_NOT_SUPORTED)
 
     return Semver(core_list)
 
@@ -252,4 +274,3 @@ def find_first_version(text: str) -> Optional[Semver]:
         return None
     
     return _semver_from_match_group(res)
-
