@@ -11,15 +11,6 @@ import enum
 # https://semver.org/#semantic-versioning-specification-semver
 # 
 # tasks:
-# 
-# - suportar parsing de versões com pré-release
-#   - ex: 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7, 1.0.0-x.7.z.92
-# 
-# - suportar parsing de versões com metadados de build
-#   - ex: 1.0.0+20130313144700, 1.0.0-beta+exp.sha.5114f85
-#   - obs: versões de pré-release e metadados de build podem compartilhar a mesma
-#          sintaxe de identificadores
-# 
 # - suportar versões de pré-release
 # - suportar versões com metadados de build
 # 
