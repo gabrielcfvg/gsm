@@ -279,8 +279,7 @@ def test_semver_compatibility(version_samples: list[Semver], version_pair_sample
         filters=[
             REQ_EQUAL_MAJOR,
             lambda v1, v2: v1._core_lenght() == 1 # if the size is 1, only major is present and the minor is null
-        ],
-        prereqs=[lambda v1, v2: v2 > v1]
+        ]
     )
 
     # if a version patch is null, then it is compatible with any other greater
@@ -308,6 +307,7 @@ def test_semver_compatibility(version_samples: list[Semver], version_pair_sample
         lambda v1, v2: v1.is_compatible_with(v2),
         filters=[
             REQ_EQUAL_MAJOR,
+            REQ_PRESENT_MINOR,
             lambda v1, v2: v2._core_lenght() == 2, # if the size is 2, then major and minor are present and the patch is null
         ],
         prereqs=[

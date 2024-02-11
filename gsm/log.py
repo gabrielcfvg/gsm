@@ -4,7 +4,6 @@ assert __name__ != "__main__"
 from typing import NoReturn, Dict
 from enum import Enum
 import logging
-import sys 
 
 # -------------------------------- third party ------------------------------- #
 from colorama import Fore, Style
@@ -22,9 +21,10 @@ class LogLevel(Enum):
 
 def _setup_logger():
     
-    format = f"[%(color)s%(levelname)s{Style.RESET_ALL}](%(pathname)s:%(lineno)s): %(message)s"
+    format = f"[%(color)s%(levelname)s{Style.RESET_ALL}](%(pathname)s: %(message)s"
     logging.basicConfig(level=logging.WARN, format=format, datefmt="%H:%M:%S")
-    
+
+
 def set_log_level(level: LogLevel):
 
     level_map: Dict[LogLevel, int] = {
@@ -41,6 +41,7 @@ def set_log_level(level: LogLevel):
 
 _setup_logger()
 
+
 def debug(message: str):
     logging.debug(message, extra={"color": Fore.MAGENTA})
 
@@ -53,6 +54,12 @@ def warn(message: str):
 def error(message: str):
     logging.error(message, extra={"color": Fore.RED})
 
+
+class PanicException(Exception):
+    
+    def __init__(self, message: str):
+        super().__init__(message)
+
 def panic(message: str) -> NoReturn:
     logging.critical(message, extra={"color": Fore.RED})
-    sys.exit(1)
+    raise PanicException(message)
