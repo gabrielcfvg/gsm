@@ -123,5 +123,3 @@ def build_fs_template(template_root: FsT_Node, dest_path: Path) -> None:
             self.path_stack.pop()
 
     template_root.visit(Builder(dest_path))
-
-
