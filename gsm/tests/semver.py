@@ -303,12 +303,13 @@ def test_semver_compatibility(version_samples: list[Semver], version_pair_sample
     assert Semver([1, 1]).is_compatible_with(Semver([1, 1])) # equal minor and patch
     assert Semver([1, 0]).is_compatible_with(Semver([1, 1])) # minor smaller
     assert Semver([1, 0, 0]).is_compatible_with(Semver([1, 1])) # minor smaller
-    assert for_all_pairs(
+    assert for_all_pairs( # minor smaller
         lambda v1, v2: v1.is_compatible_with(v2),
         filters=[
             REQ_EQUAL_MAJOR,
             REQ_PRESENT_MINOR,
             lambda v1, v2: v2._core_lenght() == 2, # if the size is 2, then major and minor are present and the patch is null
+            lambda v1, v2: v1._core_lenght() == 3, # if the size is 3, then major, minor and patch are present
         ],
         prereqs=[
             lambda v1, v2: v1._minor() < v2._minor()
