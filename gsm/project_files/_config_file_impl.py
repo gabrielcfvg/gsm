@@ -10,8 +10,9 @@ import msgspec
 # ----------------------------------- local ---------------------------------- #
 from gsm.log import info, panic
 from gsm.version import parse_version
-from gsm.project_files.version import VersionType
-from gsm.project_files._files_impl_utils import GsmFileStruct, gen_padding
+from gsm.project_files.version import Version, VersionType, SemverVersion, BranchVersion, TagVersion, CommitVersion
+from gsm.project_files._files_impl_utils import GsmFileStruct
+import gsm.project_files.files as out
 
 
 
@@ -76,31 +77,51 @@ class ConfigFileVersion(GsmFileStruct):
         else:
             panic(f"internal error: invalid ConfigFileVersion, all version fields are None")
 
-    def get_version(self) -> str:
+    def get_version(self) -> Version:
 
         match self.get_version_type():
 
             case VersionType.Semver:
                 assert self.version != None
-                return self.version
+                semver = parse_version(self.version)
+                assert semver != None
+                return SemverVersion(semver)
             
             case VersionType.Branch:
                 assert self.branch != None
-                return self.branch
+                return BranchVersion(self.branch)
             
             case VersionType.Tag:
                 assert self.tag != None
-                return self.tag
+                return TagVersion(self.tag)
             
             case VersionType.Commit:
                 assert self.commit != None
-                return self.commit
+                return CommitVersion(self.commit)
 
 class ConfigFile_Dependency(ConfigFileVersion):
     
     # the members need to be optional because the parent class has fields with default values
     path: Optional[str] = None
     remote: Optional[str] = None
+
+
+    def gen_out(self) -> out.ConfigFile_Dependency:
+        
+        # validade before generating
+        self.validate()
+
+        info(f"generating config file dependency definitive object from the parsing object,"
+             f"dependency: {self.path}")
+        
+        assert self.path != None
+        assert self.remote != None
+
+        return out.ConfigFile_Dependency(
+            path=Path(self.path),
+            remote=self.remote,
+            version=self.get_version(),
+        )
 
     def validate(self):
         
@@ -128,30 +149,26 @@ class ConfigFile_Dependency(ConfigFileVersion):
         # validate the version
         super().validate()
 
-    def __str__(self, level: int = 0):
-        return gen_padding(level) + f"{self.__class__.__name__}(name={self.path}, version_type={self.get_version_type()}, version={self.get_version()}, remote={self.remote})"
-
 
 class ConfigFile(GsmFileStruct):
     dependencies: list[ConfigFile_Dependency] = msgspec.field(name="dependency")
 
+    def gen_out(self) -> out.ConfigFile:
+
+        # validade before generating
+        self.validate()
+
+        info(f"generating config file definitive object from the parsing object")
+        
+        dep_list = [dep.gen_out() for dep in self.dependencies]
+        return out.ConfigFile(dependencies=dep_list)
+
     def validate(self):
-
-        info(f"validating config file")
-
-        for dependency in self.dependencies:
-            dependency.validate()
-
-    def __str__(self, level: int = 0) -> str:
-        
-        ret = gen_padding(level) + f"{self.__class__.__name__}()"
-        for dependency in self.dependencies:
-            ret += "\n" + dependency.__str__(level + 1)
-        
-        return ret
+        # info(f"performing config file syntactic validation")
+        pass
 
 
-def load_config_file() -> ConfigFile:
+def load_config_file() -> out.ConfigFile:
 
     info(f"loading config file: {CONFIG_FILE_PATH}")
 
@@ -163,6 +180,5 @@ def load_config_file() -> ConfigFile:
     
     file_content: str = open(CONFIG_FILE_PATH, 'r').read()
     project_config: ConfigFile = msgspec.toml.decode(file_content, type=ConfigFile)
-    project_config.validate()
     
-    return project_config
+    return project_config.gen_out()
