@@ -4,7 +4,7 @@
 # ---------------------------------------------------------------------------- #
 
 # ------------------------------- test targets ------------------------------- #
-from gsm.project_files._files_utils import hash_file, is_valid_hash, HEX_DIGITS
+from gsm.project_files._files_impl_utils import hash_file, is_valid_hash, HEX_DIGITS
 
 # ---------------------------------- builtin --------------------------------- #
 from pathlib import Path

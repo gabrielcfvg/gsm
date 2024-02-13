@@ -1,7 +1,6 @@
 # ---------------------------------- builtin --------------------------------- #
 from hashlib import blake2b
 from pathlib import Path
-from enum import Enum
 
 # -------------------------------- third party ------------------------------- #
 import msgspec
@@ -61,14 +60,3 @@ class GsmFileStruct(msgspec.Struct, forbid_unknown_fields=True):
     This class provides a single source of truth for all the msgspec structs used in the project.
     The configurations that shall be used by all structs should be set here.
     """
-
-
-# ---------------------------------------------------------------------------- #
-#                                    version                                   #
-# ---------------------------------------------------------------------------- #
-    
-class VersionType(Enum):
-    Semver = "semver"
-    Tag = "tag"
-    Branch = "branch"
-    Commit = "commit"
