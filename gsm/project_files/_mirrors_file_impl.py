@@ -96,6 +96,10 @@ def load_mirrors_file() -> Optional[out.MirrorsFile]:
     assert MIRRORS_FILE_PATH.is_file(), f"internal error: mirrors file is not a file"
 
     file_content: str = open(MIRRORS_FILE_PATH, 'r').read()
-    mirrors: MirrorsFile = msgspec.toml.decode(file_content, type=MirrorsFile)
+
+    try:
+        mirrors: MirrorsFile = msgspec.toml.decode(file_content, type=MirrorsFile)
+    except msgspec.ValidationError as error:
+        panic(f"invalid {MIRRORS_FILE_PATH}, {error}")
 
     return mirrors.gen_out()

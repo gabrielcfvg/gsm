@@ -1,7 +1,7 @@
 
 # ---------------------------------- builtin --------------------------------- #
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, cast
 from pathlib import Path
 
 # -------------------------------- third party ------------------------------- #
@@ -151,7 +151,7 @@ class ConfigFile_Dependency(ConfigFileVersion):
 
 
 class ConfigFile(GsmFileStruct):
-    dependencies: list[ConfigFile_Dependency] = msgspec.field(name="dependency")
+    dependencies: list[ConfigFile_Dependency] = msgspec.field(name="dependency", default=cast(list[ConfigFile_Dependency], []))
 
     def gen_out(self) -> out.ConfigFile:
 
@@ -179,6 +179,10 @@ def load_config_file() -> out.ConfigFile:
         panic(f"{CONFIG_FILE_PATH} is not a file.")
     
     file_content: str = open(CONFIG_FILE_PATH, 'r').read()
-    project_config: ConfigFile = msgspec.toml.decode(file_content, type=ConfigFile)
+
+    try:
+        project_config: ConfigFile = msgspec.toml.decode(file_content, type=ConfigFile)
+    except msgspec.ValidationError as error:
+        panic(f"invalid {CONFIG_FILE_PATH}, {error}")
     
     return project_config.gen_out()

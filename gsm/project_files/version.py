@@ -36,6 +36,9 @@ class Version(Protocol):
     @abstractmethod
     def accept(self, visitor: VersionVisitor): ...
 
+    @abstractmethod
+    def __eq__(self, other: object) -> bool: ...
+
 
 @dataclass
 class SemverVersion(Version):
@@ -44,6 +47,14 @@ class SemverVersion(Version):
     def accept(self, visitor: VersionVisitor):
         return visitor.visit_semver(self.version)
     
+    @override
+    def __eq__(self, other: object) -> bool:
+        
+        if not isinstance(other, SemverVersion):
+            return False
+        
+        return self.version == other.version
+
 
 @dataclass
 class TagVersion(Version):
@@ -51,7 +62,15 @@ class TagVersion(Version):
 
     def accept(self, visitor: VersionVisitor):
         return visitor.visit_tag(self.tag)
-    
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        
+        if not isinstance(other, TagVersion):
+            return False
+        
+        return self.tag == other.tag
+        
 
 @dataclass
 class BranchVersion(Version):
@@ -61,6 +80,14 @@ class BranchVersion(Version):
     def accept(self, visitor: VersionVisitor):
         return visitor.visit_branch(self.branch)
     
+    @override
+    def __eq__(self, other: object) -> bool:
+        
+        if not isinstance(other, BranchVersion):
+            return False
+        
+        return self.branch == other.branch
+
 
 @dataclass
 class CommitVersion(Version):
@@ -68,6 +95,14 @@ class CommitVersion(Version):
 
     def accept(self, visitor: VersionVisitor):
         return visitor.visit_commit(self.commit)
+    
+    @override
+    def __eq__(self, other: object) -> bool:
+        
+        if not isinstance(other, CommitVersion):
+            return False
+        
+        return self.commit == other.commit
 
 
 def get_version_type(version: Version) -> VersionType:

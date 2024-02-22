@@ -158,6 +158,10 @@ def load_lock_file() -> Optional[out.LockFile]:
         panic(f"the lock file should be a file, but it is not: {LOCK_FILE_PATH}")
 
     file_content: str = open(LOCK_FILE_PATH, 'r').read()
-    project_lock: LockFile = msgspec.toml.decode(file_content, type=LockFile)
+
+    try:
+        project_lock: LockFile = msgspec.toml.decode(file_content, type=LockFile)
+    except msgspec.ValidationError as error:
+        panic(f"invalid {LOCK_FILE_PATH}, {error}")
 
     return project_lock.gen_out()

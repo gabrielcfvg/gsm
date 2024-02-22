@@ -27,7 +27,6 @@ def create_project_template(
 #                                     tests                                    #
 # ---------------------------------------------------------------------------- #
 
-
 def test_create_project_template(tmp_path: Path):
 
     # empty files
