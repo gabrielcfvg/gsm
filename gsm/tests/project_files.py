@@ -39,8 +39,6 @@ def tmp_change_dir(dir: Path):
 
 def test_config_file_loading(tmp_path: Path):
 
-    # TODO: null path or remote should panic
-    # TODO: null branch, tag or commit should panic
     # TODO: invalid semver string should panic
 
     # ----------------------------- dependency count ----------------------------- #
@@ -206,7 +204,19 @@ def test_config_file_loading(tmp_path: Path):
             with pytest.raises(PanicException):
                 config = load_config_file()
 
-    # ------------------------------- unknow field ------------------------------- #
+    # invalid semver string should panic
+    config_file = "\n".join([
+        r"""[[dependency]]          """,
+        r"""path    = "deps/foo"    """,
+        r"""remote  = "remote_foo"  """,
+        r"""version = "foobar"      """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+        with tmp_change_dir(project_path):
+            with pytest.raises(PanicException):
+                config = load_config_file()
+
+    # ------------------------------- unknown field ------------------------------- #
                 
     # unknown project field should panic
     config_file = "\n".join([
@@ -234,6 +244,84 @@ def test_config_file_loading(tmp_path: Path):
             with pytest.raises(PanicException):
                 config = load_config_file()
 
+    # -------------------------------- null field -------------------------------- #
+    
+    # null path should panic
+    config_file = "\n".join([
+        r"""[[dependency]]          """,
+        r"""path    = ""            """,
+        r"""remote  = "remote_foo"  """,
+        r"""version = "1.0.0"       """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+        with tmp_change_dir(project_path):
+            with pytest.raises(PanicException):
+                config = load_config_file()
+    
+    # null remote should panic
+    config_file = "\n".join([
+        r"""[[dependency]]          """,
+        r"""path    = "deps/foo"    """,
+        r"""remote  = ""            """,
+        r"""version = "1.0.0"       """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+        with tmp_change_dir(project_path):
+            with pytest.raises(PanicException):
+                config = load_config_file()
+
+    # null version should panic
+    config_file = "\n".join([
+        r"""[[dependency]]          """,
+        r"""path    = "deps/foo"    """,
+        r"""remote  = "remote_foo"  """,
+        r"""version = ""            """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+        with tmp_change_dir(project_path):
+            with pytest.raises(PanicException):
+                config = load_config_file()
+    
+    # null tag should panic
+    config_file = "\n".join([
+        r"""[[dependency]]          """,
+        r"""path    = "deps/foo"    """,
+        r"""remote  = "remote_foo"  """,
+        r"""tag     = ""            """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+        with tmp_change_dir(project_path):
+            with pytest.raises(PanicException):
+                config = load_config_file()
+
+    # null branch should panic
+    config_file = "\n".join([
+        r"""[[dependency]]          """,
+        r"""path    = "deps/foo"    """,
+        r"""remote  = "remote_foo"  """,
+        r"""branch  = ""            """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+        with tmp_change_dir(project_path):
+            with pytest.raises(PanicException):
+                config = load_config_file()
+    
+    # null commit when using branch should panic
+    config_file = "\n".join([
+        r"""[[dependency]]          """,
+        r"""path    = "deps/foo"    """,
+        r"""remote  = "remote_foo"  """,
+        r"""branch  = "foobar"      """,
+        r"""commit  = ""            """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+        with tmp_change_dir(project_path):
+            with pytest.raises(PanicException):
+                config = load_config_file()
+    
+
+
+
 
 def test_lock_file_loading(tmp_path: Path):
 
@@ -250,7 +338,7 @@ def test_lock_file_loading(tmp_path: Path):
     
     # ---------------------------- invalid field value --------------------------- #
 
-    # ------------------------------- unknow field ------------------------------- #
+    # ------------------------------- unknown field ------------------------------- #
     pass
 
 def test_mirrors_file_loading(tmp_path: Path):
@@ -263,5 +351,5 @@ def test_mirrors_file_loading(tmp_path: Path):
     
     # ---------------------------- invalid field value --------------------------- #
 
-    # ------------------------------- unknow field ------------------------------- #
+    # ------------------------------- unknown field ------------------------------- #
     pass
