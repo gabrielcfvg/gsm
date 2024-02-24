@@ -27,7 +27,7 @@ class ConfigFileVersion(GsmFileStruct):
 
     def validate(self):
 
-        info(f"validanting config file version")
+        info(f"validating config file version")
 
         field = [self.version, self.branch, self.tag, self.commit]
         definition_count = len(field) - field.count(None)
@@ -41,7 +41,7 @@ class ConfigFileVersion(GsmFileStruct):
             panic(f"invalid {CONFIG_FILE_PATH}, no version type is set, one of them is required"
                   f"valid version types: {', '.join(ConfigFileVersion.__dict__.keys())}")
             
-        # validade the version field
+        # validate the version field
         match self.get_version_type():
 
             case VersionType.Semver:
@@ -108,7 +108,7 @@ class ConfigFile_Dependency(ConfigFileVersion):
 
     def gen_out(self) -> out.ConfigFile_Dependency:
         
-        # validade before generating
+        # validate before generating
         self.validate()
 
         info(f"generating config file dependency definitive object from the parsing object,"
@@ -127,6 +127,8 @@ class ConfigFile_Dependency(ConfigFileVersion):
         
         info(f"validating config file dependency: {self.path}")
         
+        # ---------------------- check if the field aren't null ---------------------- #
+
         # check if the path is defined
         if self.path == None:
             panic(f"invalid {CONFIG_FILE_PATH}, dependency path is not set")
@@ -134,6 +136,19 @@ class ConfigFile_Dependency(ConfigFileVersion):
         # check if the remote is defined
         if self.remote == None:
             panic(f"invalid {CONFIG_FILE_PATH}, dependency remote is not set")
+
+        # ------------------- check if the path field aren't empty ------------------- #
+
+        # check if the path is not empty
+        if self.path == "":
+            panic(f"invalid {CONFIG_FILE_PATH}, dependency path is empty. paths can not be empty")
+
+        # check if the remote is not empty
+        if self.remote == "":
+            panic(f"invalid {CONFIG_FILE_PATH}, dependency remote is empty. remotes can not be empty")        
+
+
+        # ------------------------ validate the fields values ------------------------ #
 
         # check if the path is relative
         # we should not check if the directory exists since is possible that no installation has been made since this dependency was added
@@ -155,7 +170,7 @@ class ConfigFile(GsmFileStruct):
 
     def gen_out(self) -> out.ConfigFile:
 
-        # validade before generating
+        # validate before generating
         self.validate()
 
         info(f"generating config file definitive object from the parsing object")

@@ -379,9 +379,6 @@ def test_semver_ordering(version_pair_samples: list[tuple[Semver, Semver]]):
     for_all_pairs = gen_for_all_pairs(version_pair_samples)
 
 
-    # TODO: testar a não-equidade das versões com cores nulos
-    # ex: 0.1 != 0.1.0, 0.1.0 > 0.1
-
     # any pair of version should be always and exclusively be: equal, greater, or smaller
     assert Semver([1, 0, 0]) > Semver([0, 0, 0])
     assert not (Semver([1, 0, 0]) < Semver([0, 0, 0]))

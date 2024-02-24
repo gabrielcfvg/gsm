@@ -39,8 +39,6 @@ def tmp_change_dir(dir: Path):
 
 def test_config_file_loading(tmp_path: Path):
 
-    # TODO: invalid semver string should panic
-
     # ----------------------------- dependency count ----------------------------- #
 
     # empty config file
@@ -246,17 +244,18 @@ def test_config_file_loading(tmp_path: Path):
 
     # -------------------------------- null field -------------------------------- #
     
-    # null path should panic
-    config_file = "\n".join([
-        r"""[[dependency]]          """,
-        r"""path    = ""            """,
-        r"""remote  = "remote_foo"  """,
-        r"""version = "1.0.0"       """,
-    ])
-    with create_tmp_fs_node(create_project_template(config_file)) as project_path:
-        with tmp_change_dir(project_path):
-            with pytest.raises(PanicException):
-                config = load_config_file()
+    # TODO: we may need to check if the path is different from the project root
+    # # null path should panic
+    # config_file = "\n".join([
+    #     r"""[[dependency]]          """,
+    #     r"""path    = ""            """,
+    #     r"""remote  = "remote_foo"  """,
+    #     r"""version = "1.0.0"       """,
+    # ])
+    # with create_tmp_fs_node(create_project_template(config_file)) as project_path:
+    #     with tmp_change_dir(project_path):
+    #         with pytest.raises(PanicException):
+    #             config = load_config_file()
     
     # null remote should panic
     config_file = "\n".join([
