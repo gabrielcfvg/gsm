@@ -3,3 +3,4 @@
 /.vscode/
 /poetry/
 /.venv/
+/.python-version
