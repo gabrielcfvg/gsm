@@ -1,0 +1,9 @@
+{
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+
+    "name": "gsm",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {"--target": "dev_env", "--tags": "devcontainer_gsm_dev_env"}
+    }
+}
