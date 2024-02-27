@@ -122,7 +122,7 @@ class LockFile_Lock(LockFileVersion):
 
 class LockFile(GsmFileStruct):
     gsm_version: str
-    locks: list[LockFile_Lock]
+    locks: list[LockFile_Lock] = []
 
     def gen_out(self) -> out.LockFile:
 
