@@ -1,6 +1,6 @@
 
 # ---------------------------------- builtin --------------------------------- #
-from typing import Optional
+from typing import Optional, cast
 from pathlib import Path
 
 # -------------------------------- third party ------------------------------- #
@@ -43,7 +43,7 @@ class MirrorsFile_Mirror(GsmFileStruct):
 
 class MirrorsFile(GsmFileStruct):
     gsm_version: str
-    mirrors: list[MirrorsFile_Mirror]
+    mirrors: list[MirrorsFile_Mirror] = msgspec.field(name="mirror", default=cast(list[MirrorsFile_Mirror], []))
 
     def gen_out(self) -> out.MirrorsFile:
         

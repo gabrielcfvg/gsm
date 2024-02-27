@@ -1,6 +1,6 @@
 
 # ---------------------------------- builtin --------------------------------- #
-from typing import Optional
+from typing import Optional, cast
 from pathlib import Path
 
 # -------------------------------- third party ------------------------------- #
@@ -122,7 +122,7 @@ class LockFile_Lock(LockFileVersion):
 
 class LockFile(GsmFileStruct):
     gsm_version: str
-    locks: list[LockFile_Lock] = []
+    locks: list[LockFile_Lock] = msgspec.field(name="lock", default=cast(list[LockFile_Lock], []))
 
     def gen_out(self) -> out.LockFile:
 
