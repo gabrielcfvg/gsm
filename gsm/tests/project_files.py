@@ -10,7 +10,7 @@ import pytest
 from gsm.log import PanicException
 from gsm.tests.test_utils.project_template import create_project_template
 from gsm.tests.test_utils.fs_template import create_tmp_fs_node
-from gsm.project_files import load_config_file, load_lock_file
+from gsm.project_files import load_config_file, load_lock_file, load_mirrors_file
 from gsm.project_files.version import SemverVersion, TagVersion, BranchVersion, CommitVersion
 from gsm.semver import Semver
 from gsm.version import GSM_VERSION
@@ -321,7 +321,8 @@ def test_lock_file_loading(tmp_path: Path):
         r"""[[lock]]                      """,
         r"""path = "deps/foo"             """,
         f"""hash = "{hash_example()}"     """,
-        r"""version = "0.1.0              """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_not_panic(lock_file)
 
@@ -331,12 +332,14 @@ def test_lock_file_loading(tmp_path: Path):
         r"""[[lock]]                      """,
         r"""path = "deps/foo"             """,
         f"""hash = "{hash_example()}"     """,
-        r"""version = "0.1.0              """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
         r"""                              """,
         r"""[[lock]]                      """,
         r"""path = "deps/bar"             """,
         f"""hash = "{hash_example()}"     """,
-        r"""version = "0.1.0              """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_not_panic(lock_file)
 
@@ -350,12 +353,14 @@ def test_lock_file_loading(tmp_path: Path):
         r"""[[lock]]                      """,
         r"""path = "deps/foo"             """,
         f"""hash = "{hash_example()}"     """,
-        r"""version = "0.1.0              """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     with create_tmp_fs_node(create_project_template(lock_file)) as project_path:
         with tmp_change_dir(project_path):
             lock = load_lock_file()
             assert lock != None
+            assert lock.gsm_version == GSM_VERSION
             assert len(lock.locks) == 1
             assert lock.locks[0].path == Path("deps/foo")
             assert lock.locks[0].hash == hash_example()
@@ -367,12 +372,14 @@ def test_lock_file_loading(tmp_path: Path):
         r"""[[lock]]                      """,
         r"""path = "deps/foo"             """,
         f"""hash = "{hash_example()}"     """,
-        r"""tag  = "tag_foo               """,
+        r"""version_type = "Tag"          """,
+        r"""tag  = "tag_foo"              """,
     ])
     with create_tmp_fs_node(create_project_template(lock_file)) as project_path:
         with tmp_change_dir(project_path):
             lock = load_lock_file()
             assert lock != None
+            assert lock.gsm_version == GSM_VERSION
             assert len(lock.locks) == 1
             assert lock.locks[0].path == Path("deps/foo")
             assert lock.locks[0].hash == hash_example()
@@ -384,13 +391,15 @@ def test_lock_file_loading(tmp_path: Path):
         r"""[[lock]]                      """,
         r"""path   = "deps/foo"           """,
         f"""hash   = "{hash_example()}"   """,
+        r"""version_type = "Branch"       """,
         r"""branch = "branch_foo"         """,
-        r"""commit = "commit_foo"         """,
+        r"""branch_commit = "commit_foo"  """,
     ])
     with create_tmp_fs_node(create_project_template(lock_file)) as project_path:
         with tmp_change_dir(project_path):
             lock = load_lock_file()
             assert lock != None
+            assert lock.gsm_version == GSM_VERSION
             assert len(lock.locks) == 1
             assert lock.locks[0].path == Path("deps/foo")
             assert lock.locks[0].hash == hash_example()
@@ -402,12 +411,14 @@ def test_lock_file_loading(tmp_path: Path):
         r"""[[lock]]                      """,
         r"""path = "deps/foo"             """,
         f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Commit"       """,
         r"""commit = "commit_foo"         """,
     ])
     with create_tmp_fs_node(create_project_template(lock_file)) as project_path:
         with tmp_change_dir(project_path):
             lock = load_lock_file()
             assert lock != None
+            assert lock.gsm_version == GSM_VERSION
             assert len(lock.locks) == 1
             assert lock.locks[0].path == Path("deps/foo")
             assert lock.locks[0].hash == hash_example()
@@ -422,7 +433,8 @@ def test_lock_file_loading(tmp_path: Path):
         r"""[[lock]]                  """,
         r"""path = "deps/foo"         """,
         f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"         """,
     ])
     shall_panic(lock_file)
 
@@ -431,36 +443,49 @@ def test_lock_file_loading(tmp_path: Path):
         f"""gsm_version = "{GSM_VERSION}" """,
         r"""[[lock]]                      """,
         f"""hash = "{hash_example()}"     """,
-        r"""version = "0.1.0              """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     # lock with missing hash should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     # lock without any version types should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
     ])
     shall_panic(lock_file)
 
     # lock with more than one version type should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
-        r"""tag = "tag_foo"           """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version = "0.1.0"             """,
+        r"""tag = "tag_foo"               """,
+    ])
+    shall_panic(lock_file)
+
+    # lock without version_type field should panic
+    lock_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
     
@@ -470,98 +495,108 @@ def test_lock_file_loading(tmp_path: Path):
 
     # lock with non-string path
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = 123                """, # number instead of string
-        f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = 123                    """, # number instead of string
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = [1, 2, 3]          """, # array instead of string
-        f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = [1, 2, 3]              """, # array instead of string
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
 
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = {foo = "bar"}      """, # dict instead of string
-        f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = {foo = "bar"}          """, # dict instead of string
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
 
     # lock with non-string hash
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = 123                """, # number instead of string
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = 123                    """, # number instead of string
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
 
     # lock with non-string tag version
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""tag  = 123                """, # number instead of string
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Tag"          """,
+        r"""tag  = 123                    """, # number instead of string
     ])
     shall_panic(lock_file)
 
     # lock with non-string branch version
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"       """,
-        r"""[[lock]]                    """,
-        r"""path   = "deps/foo"         """,
-        f"""hash   = "{hash_example()}" """,
-        r"""branch = 123                """, # number instead of string
-        r"""commit = "commit_foo"       """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path   = "deps/foo"           """,
+        f"""hash   = "{hash_example()}"   """,
+        r"""version_type = "Branch"       """,
+        r"""branch = 123                  """, # number instead of string
+        r"""branch_commit = "commit_foo"  """,
     ])
     shall_panic(lock_file)
 
     # lock with branch version and non-string commit version
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"       """,
-        r"""[[lock]]                    """,
-        r"""path   = "deps/foo"         """,
-        f"""hash   = "{hash_example()}" """,
-        r"""branch = "branch_foo"       """,
-        r"""commit = 123                """, # number instead of string
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path   = "deps/foo"           """,
+        f"""hash   = "{hash_example()}"   """,
+        r"""version_type = "Branch"       """,
+        r"""branch = "branch_foo"         """,
+        r"""branch_commit = 123           """, # number instead of string
     ])
     shall_panic(lock_file)
 
     # lock with non-string commit version
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""commit = 123              """, # number instead of string
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Commit"       """,
+        r"""commit = 123                  """, # number instead of string
     ])
     shall_panic(lock_file)
 
     # lock with non-string semver version
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""version = 123             """, # number instead of string
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = 123                 """, # number instead of string
     ])
     shall_panic(lock_file)
 
     # lock with invalid semver string
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""version = "foobar"        """, # invalid semver string
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "foobar"            """, # invalid semver string
     ])
     shall_panic(lock_file)
 
@@ -570,52 +605,57 @@ def test_lock_file_loading(tmp_path: Path):
 
     # empty path should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = ""                 """,
-        f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = ""                     """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     # empty hash should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = ""                 """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = ""                     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     # empty tag version should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"    """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""tag  = ""                 """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Tag"          """,
+        r"""tag  = ""                     """,
     ])
     shall_panic(lock_file)
 
     # empty branch version should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"       """,
-        r"""[[lock]]                    """,
-        r"""path   = "deps/foo"         """,
-        f"""hash   = "{hash_example()}" """,
-        r"""branch = ""                 """,
-        r"""commit = "commit_foo"       """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path   = "deps/foo"           """,
+        f"""hash   = "{hash_example()}"   """,
+        r"""version_type = "Branch"       """,
+        r"""branch = ""                   """,
+        r"""commit = "commit_foo"         """,
     ])
     shall_panic(lock_file)
 
     # empty commit version should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""commit = ""               """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Commit"       """,
+        r"""commit = ""                   """,
     ])
 
     # we do not need to test empty semver version because an empty string is not a valid semver string
@@ -625,31 +665,34 @@ def test_lock_file_loading(tmp_path: Path):
 
     # hash with less than 64 characters should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{"a" * 63}"       """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{"a" * 63}"           """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     # hash with more than 64 characters should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{"a" * 65}"       """,
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{"a" * 65}"           """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     # hash with non-hex characters should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{"g" + ("a" * 63)}""", # 'g' is not a valid hex character
-        r"""version = "0.1.0          """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{"g" + ("a" * 63)}    """, # 'g' is not a valid hex character
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
@@ -659,36 +702,158 @@ def test_lock_file_loading(tmp_path: Path):
 
     # unknown project field should panic
     lock_file = "\n".join([
-        r"""unknown = "unknown"       """,
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
+        r"""unknown = "unknown"           """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
     ])
     shall_panic(lock_file)
 
     # unknown lock field should panic
     lock_file = "\n".join([
-        f"""gsm_version = "{GSM_VERSION}"     """,
-        r"""[[lock]]                  """,
-        r"""path = "deps/foo"         """,
-        f"""hash = "{hash_example()}" """,
-        r"""version = "0.1.0          """,
-        r"""unknown = "unknown"       """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[lock]]                      """,
+        r"""path = "deps/foo"             """,
+        f"""hash = "{hash_example()}"     """,
+        r"""version_type = "Semver"       """,
+        r"""version = "0.1.0"             """,
+        r"""unknown = "unknown"           """,
     ])
     shall_panic(lock_file)
 
 
 def test_mirrors_file_loading(tmp_path: Path):
 
-    # -------------------------------- lock count -------------------------------- #
+    def shall_panic(mirrors_file_str: str):
+        with create_tmp_fs_node(create_project_template(config_file_str="", lock_file_str=None, mirrors_file_str=mirrors_file_str)) as project_path:
+            with tmp_change_dir(project_path):
+                with pytest.raises(PanicException):
+                    _ = load_mirrors_file()
 
-    # -------------------------- different version types ------------------------- #
+    def shall_not_panic(mirrors_file_str: str):
+        with create_tmp_fs_node(create_project_template(config_file_str="", lock_file_str=None, mirrors_file_str=mirrors_file_str)) as project_path:
+            with tmp_change_dir(project_path):
+                lock = load_mirrors_file()
+                assert lock != None
+
+    # TODO: características para testar
+    #       - missing field
+    #       - invalid field value
+    #       - unknown field
+
+
+    # -------------------------------- field count ------------------------------- #
+    # check if the parser is able to handle different amounts of mirrors in the mirrors file
     
+    # no mirrors
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+    ])
+    shall_not_panic(mirrors_file)
+
+    # one mirror
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_foo"         """,
+    ])
+    shall_not_panic(mirrors_file)
+
+    # more than one mirror
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_foo"         """,
+        r"""                              """,
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_bar"         """,
+    ])
+    shall_not_panic(mirrors_file)
+
+
+    # ------------------------------ fields content ------------------------------ #
+    # check if the parser the field values correctly
+
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_foo"         """,
+    ])
+    with create_tmp_fs_node(create_project_template(config_file_str="", lock_file_str=None, mirrors_file_str=mirrors_file)) as project_path:
+        with tmp_change_dir(project_path):
+            mirrors = load_mirrors_file()
+            assert mirrors != None
+            assert mirrors.gsm_version == GSM_VERSION
+            assert len(mirrors.mirrors) == 1
+            assert mirrors.mirrors[0].remote == "remote_foo"
+
+
     # ------------------------------- missing field ------------------------------ #
+    # check if the parser throws an error if some of the required fields are missing
     
+    # missing gsm version should panic
+    mirrors_file = "\n".join([
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_foo"         """,
+    ])
+    shall_panic(mirrors_file)
+
+    # mirror with missing remote should panic
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+    ])
+    shall_panic(mirrors_file)
+
+
     # ---------------------------- invalid field value --------------------------- #
+    # check if the parser throws an error if some of the fields have invalid values
+
+    # gsm_version with invalid semver string should panic
+    mirrors_file = "\n".join([
+        f"""gsm_version = "foobar"        """,
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_foo"         """,
+    ])
+    shall_panic(mirrors_file)
+
+    # mirror with non-string remote should panic
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+        r"""remote = 123                  """,
+    ])
+    shall_panic(mirrors_file)
+
+    # mirror with an empty string remote should panic
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+        r"""remote = ""                   """,
+    ])
+    shall_panic(mirrors_file)
+
 
     # ------------------------------- unknown field ------------------------------- #
-    pass
+    # check if the parser throws an error if some of the fields are unknown
+
+    # unknown project field should panic
+    mirrors_file = "\n".join([
+        r"""unknown = "unknown"           """,
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_foo"         """,
+    ])
+    shall_panic(mirrors_file)
+
+    # unknown mirror field should panic
+    mirrors_file = "\n".join([
+        f"""gsm_version = "{GSM_VERSION}" """,
+        r"""[[mirror]]                    """,
+        r"""remote = "remote_foo"         """,
+        r"""unknown = "unknown"           """,
+    ])
+    shall_panic(mirrors_file)
