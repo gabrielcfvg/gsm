@@ -105,28 +105,21 @@ class LockFile:
 #                                 mirrors file                                 #
 # ---------------------------------------------------------------------------- #
 
-# TODO: generate mirror id with the hash of the remote url
+# TODO: We can use a hex representation of the remote url for generating the
+#       filename of the mirror object files
 
 class MirrorsFile_Mirror:
-    id: str # generated name for the mirror
-    hash: str # hash of the mirror file content
     remote: str
 
-    def __init__(self, id: str, hash: str, remote: str):
+    def __init__(self, remote: str):
             
-        assert len(id) > 0
-        assert id.isascii()
         assert len(remote) > 0
-        assert is_valid_hash(hash)
-
-        self.id = id
-        self.hash = hash
         self.remote = remote
 
     def __repr__(self, level: int = 0) -> str:
             
         padding = gen_padding(level)
-        return f"{padding}Mirror(id: {self.id}, hash: {self.hash}, remote: {self.remote})"
+        return f"{padding}Mirror(remote: {self.remote})"
 
 
 class MirrorsFile:

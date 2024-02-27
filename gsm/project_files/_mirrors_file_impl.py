@@ -8,7 +8,6 @@ import msgspec
 
 # ----------------------------------- local ---------------------------------- #
 from gsm.project_files._files_impl_utils import GsmFileStruct
-from gsm.project_files.hash import is_valid_hash
 import gsm.project_files.files as out
 from gsm.log import info, panic
 from gsm.version import GSM_VERSION, parse_version, Semver
@@ -20,8 +19,6 @@ MIRRORS_FILE_PATH = MIRROR_DIR_PATH / "mirrors.toml"
 
 
 class MirrorsFile_Mirror(GsmFileStruct):
-    id: str
-    hash: str
     remote: str
 
     def gen_out(self) -> out.MirrorsFile_Mirror:
@@ -32,8 +29,6 @@ class MirrorsFile_Mirror(GsmFileStruct):
         info(f"generating definitive mirror from the parse object, mirror: {self.remote}")
 
         return out.MirrorsFile_Mirror(
-            id=self.id,
-            hash=self.hash,
             remote=self.remote
         )
 
@@ -44,22 +39,6 @@ class MirrorsFile_Mirror(GsmFileStruct):
         # check if the remote field is not a empty string
         if self.remote == "":
             panic(f"invalid {MIRRORS_FILE_PATH}, internal error or corrupted file, mirror remote is empty, mirror: '{self.remote}'")
-
-
-        # we do not need to check if 'path' is a valid path string since any string is a valid path
-        # if the string is invalid in any way, the 'Path' constructor would catch it
-
-        # validate the mirror id
-        # for now we only check if it is not empty
-        if self.id == "":
-            panic(f"invalid {MIRRORS_FILE_PATH}, internal error or corrupted file, mirror id is empty, mirror: '{self.remote}'")
-
-
-        # TODO: checar se o nome do arquivo do path tem as extensões corretas
-
-        # check if the hash is a valid hash digest
-        if not is_valid_hash(self.hash):
-            panic(f"invalid {MIRRORS_FILE_PATH}, internal error or corrupted file, invalid hash digest, mirror: '{self.remote}'")
 
 
 class MirrorsFile(GsmFileStruct):
